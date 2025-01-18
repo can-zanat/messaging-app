@@ -1,3 +1,5 @@
 # .config/local.yaml
 mongoDB:
   uri: "mongodb://localhost:27017"
+
+mockyURL: "https://run.mocky.io/v3/31b46f4d-f780-4be9-b669-889c93bf6a42"

@@ -11,7 +11,7 @@ type Handler struct {
 type actions interface {
 	StartSending() error
 	StopSending() error
-	GetSentMessages() error
+	GetSentMessages() (*[]Message, error)
 }
 
 func NewHandler(service actions) *Handler {
@@ -20,18 +20,39 @@ func NewHandler(service actions) *Handler {
 
 func (h *Handler) RegisterRoutes(app *fiber.App) {
 	app.Post("/start-sending", h.StartSending)
-	app.Get("/stop-sending", h.StopSending)
-	app.Post("/sent-messages", h.GetSentMessages)
+	app.Post("/stop-sending", h.StopSending)
+	app.Get("/sent-messages", h.GetSentMessages)
 }
 
-func (h *Handler) StartSending(_ *fiber.Ctx) error {
-	return nil
+func (h *Handler) StartSending(ctx *fiber.Ctx) error {
+	err := h.service.StartSending()
+	if err != nil {
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": err.Error(),
+		})
+	}
+
+	return ctx.JSON(fiber.Map{"message": "send process started"})
 }
 
-func (h *Handler) StopSending(_ *fiber.Ctx) error {
-	return nil
+func (h *Handler) StopSending(ctx *fiber.Ctx) error {
+	err := h.service.StopSending()
+	if err != nil {
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": err.Error(),
+		})
+	}
+
+	return ctx.JSON(fiber.Map{"message": "start process ended"})
 }
 
-func (h *Handler) GetSentMessages(_ *fiber.Ctx) error {
-	return nil
+func (h *Handler) GetSentMessages(ctx *fiber.Ctx) error {
+	messages, err := h.service.GetSentMessages()
+	if err != nil {
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": err.Error(),
+		})
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(messages)
 }

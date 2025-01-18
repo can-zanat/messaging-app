@@ -2,17 +2,17 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
+	"time"
 
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-type DBStore interface {
-	GetTwoMessages() error
-	LogSentMessages() error
-	GetSentMessages() error
-}
+const MessageQuantity = 2
 
 type MongoDBStore struct {
 	Client *mongo.Client
@@ -40,14 +40,69 @@ func NewStore() *MongoDBStore {
 	}
 }
 
-func (m *MongoDBStore) GetTwoMessages() error {
+func (m *MongoDBStore) GetTwoMessages() (*[]Message, error) {
+	collection := m.Client.Database("messages").Collection("messages")
+
+	filter := bson.M{"is_sent": false}
+
+	// Sort by _id field in ascending order and get only 2 records
+	opts := options.Find().
+		SetSort(bson.D{{Key: "_id", Value: 1}}).
+		SetLimit(int64(MessageQuantity))
+
+	cursor, err := collection.Find(context.Background(), filter, opts)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(context.Background())
+
+	var messages []Message
+	if err := cursor.All(context.Background(), &messages); err != nil {
+		return nil, err
+	}
+
+	return &messages, nil
+}
+
+func (m *MongoDBStore) UpdateSentStatus(msg *[]Message) error {
+	collection := m.Client.Database("messages").Collection("messages")
+
+	ids := make([]primitive.ObjectID, 0, MessageQuantity)
+	for _, message := range *msg {
+		ids = append(ids, message.ID)
+	}
+
+	filter := bson.M{
+		"_id": bson.M{"$in": ids},
+	}
+
+	update := bson.M{
+		"$set": bson.M{"is_sent": true, "sent_time": time.Now().Format(time.RFC3339)},
+	}
+
+	_, err := collection.UpdateMany(context.Background(), filter, update)
+	if err != nil {
+		return fmt.Errorf("failed to update is_sent: %w", err)
+	}
+
 	return nil
 }
 
-func (m *MongoDBStore) LogSentMessages() error {
-	return nil
-}
+func (m *MongoDBStore) GetSentMessages() (*[]Message, error) {
+	filter := bson.M{"is_sent": true}
 
-func (m *MongoDBStore) GetSentMessages() error {
-	return nil
+	collection := m.Client.Database("messages").Collection("messages")
+
+	cursor, err := collection.Find(context.Background(), filter)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var messages []Message
+	if err := cursor.All(context.Background(), &messages); err != nil {
+		return nil, err
+	}
+
+	return &messages, nil
 }

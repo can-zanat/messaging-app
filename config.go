@@ -9,6 +9,7 @@ type Config struct {
 	MongoDB struct {
 		URI string `mapstructure:"uri"`
 	} `mapstructure:"mongoDB"`
+	MockyURL string `mapstructure:"mockyURL"`
 }
 
 func LoadConfig() (*Config, error) {
