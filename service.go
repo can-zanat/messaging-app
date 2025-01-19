@@ -9,7 +9,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-const timeInterval = 10 * time.Second
+const timeInterval = 2 * time.Minute
 
 type Service struct {
 	store    Store
