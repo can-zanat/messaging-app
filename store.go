@@ -13,6 +13,7 @@ import (
 )
 
 const MessageQuantity = 2
+const ContentMaxLength = 250
 
 type MongoDBStore struct {
 	Client *mongo.Client
@@ -61,7 +62,16 @@ func (m *MongoDBStore) GetTwoMessages() (*[]Message, error) {
 		return nil, err
 	}
 
-	return &messages, nil
+	var filteredMessages []Message
+	for _, msg := range messages {
+		if len(msg.Content) > ContentMaxLength {
+			log.Printf("Message ID %s exceeds content length limit with %d characters\n", msg.ID.Hex(), len(msg.Content))
+		} else {
+			filteredMessages = append(filteredMessages, msg)
+		}
+	}
+
+	return &filteredMessages, nil
 }
 
 func (m *MongoDBStore) UpdateSentStatus(msg *[]Message) error {

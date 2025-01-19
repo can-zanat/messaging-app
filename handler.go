@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	fiber "github.com/gofiber/fiber/v2"
 )
 
@@ -15,7 +16,19 @@ type actions interface {
 }
 
 func NewHandler(service actions) *Handler {
-	return &Handler{service: service}
+	h := &Handler{service: service}
+
+	// Start the sending process automatically when handler is created
+	go func() {
+		err := service.StartSending()
+		if err != nil {
+			fmt.Println("Failed to start sending process:", err)
+		}
+	}()
+
+	fmt.Println("Sending process started.")
+
+	return h
 }
 
 func (h *Handler) RegisterRoutes(app *fiber.App) {
