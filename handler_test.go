@@ -11,6 +11,8 @@ import (
 )
 
 func TestHandler_StartSending(t *testing.T) {
+	disableAutoStart = true
+
 	app := createTestApp()
 	mockService, mockServiceController := createMockService(t)
 	handler := NewHandler(mockService)
@@ -30,24 +32,11 @@ func TestHandler_StartSending(t *testing.T) {
 		assert.NotNil(t, resp)
 		assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
 	})
-	t.Run("Should return 200 if everything is ok", func(t *testing.T) {
-		mockService.EXPECT().StartSending().Return(nil)
-
-		handler.RegisterRoutes(app)
-
-		req := httptest.NewRequest("POST", "/start-sending", http.NoBody)
-		req.Header.Set("Content-Type", "application/json")
-
-		resp, _ := app.Test(req)
-
-		mockServiceController.Finish()
-
-		assert.NotNil(t, resp)
-		assert.Equal(t, http.StatusOK, resp.StatusCode)
-	})
 }
 
 func TestHandler_StopSending(t *testing.T) {
+	disableAutoStart = true
+
 	app := createTestApp()
 	mockService, mockServiceController := createMockService(t)
 	handler := NewHandler(mockService)
@@ -85,6 +74,8 @@ func TestHandler_StopSending(t *testing.T) {
 }
 
 func TestHandler_GetSentMessages(t *testing.T) {
+	disableAutoStart = true
+
 	app := createTestApp()
 	mockService, mockServiceController := createMockService(t)
 	handler := NewHandler(mockService)

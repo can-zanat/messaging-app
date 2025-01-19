@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+
 	fiber "github.com/gofiber/fiber/v2"
 )
 
@@ -15,18 +16,20 @@ type actions interface {
 	GetSentMessages() (*[]Message, error)
 }
 
+var disableAutoStart = false
+
 func NewHandler(service actions) *Handler {
 	h := &Handler{service: service}
 
-	// Start the sending process automatically when handler is created
-	go func() {
-		err := service.StartSending()
-		if err != nil {
-			fmt.Println("Failed to start sending process:", err)
-		}
-	}()
-
-	fmt.Println("Sending process started.")
+	if !disableAutoStart {
+		go func() {
+			err := service.StartSending()
+			if err != nil {
+				fmt.Println("Failed to start sending process:", err)
+			}
+		}()
+		fmt.Println("Sending process started.")
+	}
 
 	return h
 }

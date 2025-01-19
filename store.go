@@ -63,6 +63,7 @@ func (m *MongoDBStore) GetTwoMessages() (*[]Message, error) {
 	}
 
 	var filteredMessages []Message
+
 	for _, msg := range messages {
 		if len(msg.Content) > ContentMaxLength {
 			log.Printf("Message ID %s exceeds content length limit with %d characters\n", msg.ID.Hex(), len(msg.Content))
